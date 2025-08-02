@@ -202,9 +202,18 @@ if is_admin:
                 df_filtered = df_filtered[df_filtered["tipe"] == pilihan_tipe]
     
             summary = rekap_per_orang(df_filtered)
+    
+            # pilih kolom tampil sesuai tipe
+            if pilihan_tipe == "masuk":
+                display_cols = ["nama", "total_masuk", "netto", "jumlah_transaksi"]
+            elif pilihan_tipe == "keluar":
+                display_cols = ["nama", "total_keluar", "netto", "jumlah_transaksi"]
+            else:  # Semua
+                display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
+    
             st.markdown("**Rekap per orang:**")
             st.dataframe(
-                summary[["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]]
+                summary[display_cols]
                 .sort_values("netto", ascending=False)
                 .reset_index(drop=True),
                 use_container_width=True
@@ -214,11 +223,23 @@ if is_admin:
             total_masuk_all = df_filtered[df_filtered["tipe"] == "masuk"]["jumlah"].sum()
             total_keluar_all = df_filtered[df_filtered["tipe"] == "keluar"]["jumlah"].sum()
             netto_all = total_masuk_all - total_keluar_all
-            st.markdown(
-                f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
-                f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
-                f"**Netto:** Rp {netto_all:,.2f}"
-            )
+    
+            if pilihan_tipe == "masuk":
+                st.markdown(
+                    f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
+                    f"**Netto:** Rp {netto_all:,.2f}"
+                )
+            elif pilihan_tipe == "keluar":
+                st.markdown(
+                    f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
+                    f"**Netto:** Rp {netto_all:,.2f}"
+                )
+            else:
+                st.markdown(
+                    f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
+                    f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
+                    f"**Netto:** Rp {netto_all:,.2f}"
+                )
     
             st.markdown("---")
             st.markdown("**Detail transaksi terbaru:**")
@@ -243,6 +264,7 @@ if is_admin:
                                 st.image(row["bukti"], caption=f"ID: {row['id']}", width=300)
                             except Exception:
                                 st.write("Gagal menampilkan gambar (mungkin file hilang).")
+
 
 
     with tab4:
