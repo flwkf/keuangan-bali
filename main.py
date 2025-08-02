@@ -184,10 +184,24 @@ if is_admin:
 
     with tab3:
         st.subheader("Rekap & Ringkasan")
+    
         if df.empty:
             st.info("Belum ada transaksi.")
         else:
-            summary = rekap_per_orang(df)
+            # filter per orang atau semua
+            pilihan_nama = ["Semua"] + NAMA_PEMBAYAR
+            filter_nama = st.selectbox("Tampilkan untuk:", pilihan_nama)
+    
+            # filter tipe transaksi
+            pilihan_tipe = st.selectbox("Tipe transaksi:", ["Semua", "masuk", "keluar"])
+    
+            df_filtered = df.copy()
+            if filter_nama != "Semua":
+                df_filtered = df_filtered[df_filtered["nama"] == filter_nama]
+            if pilihan_tipe != "Semua":
+                df_filtered = df_filtered[df_filtered["tipe"] == pilihan_tipe]
+    
+            summary = rekap_per_orang(df_filtered)
             st.markdown("**Rekap per orang:**")
             st.dataframe(
                 summary[["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]]
@@ -195,17 +209,41 @@ if is_admin:
                 .reset_index(drop=True),
                 use_container_width=True
             )
-            total_masuk_all = df[df["tipe"] == "masuk"]["jumlah"].sum()
-            total_keluar_all = df[df["tipe"] == "keluar"]["jumlah"].sum()
+    
+            # totals berdasarkan filter
+            total_masuk_all = df_filtered[df_filtered["tipe"] == "masuk"]["jumlah"].sum()
+            total_keluar_all = df_filtered[df_filtered["tipe"] == "keluar"]["jumlah"].sum()
             netto_all = total_masuk_all - total_keluar_all
             st.markdown(
-                f"**Total pemasukan semua:** Rp {total_masuk_all:,.2f}  \n"
-                f"**Total pengeluaran semua:** Rp {total_keluar_all:,.2f}  \n"
-                f"**Netto keseluruhan:** Rp {netto_all:,.2f}"
+                f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
+                f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
+                f"**Netto:** Rp {netto_all:,.2f}"
             )
+    
             st.markdown("---")
             st.markdown("**Detail transaksi terbaru:**")
-            st.dataframe(df.sort_values("waktu", ascending=False).reset_index(drop=True))
+            st.dataframe(
+                df_filtered.sort_values("waktu", ascending=False).reset_index(drop=True),
+                use_container_width=True
+            )
+    
+            # Bukti mengikuti filter
+            st.markdown("---")
+            st.subheader("Bukti Transfer (sesuai filter)")
+            df_with_bukti = df_filtered[df_filtered["bukti"].notnull()]
+            if df_with_bukti.empty:
+                st.info("Tidak ada bukti untuk filter ini.")
+            else:
+                for _, row in df_with_bukti.iterrows():
+                    with st.expander(f"{row['nama']} | {'+' if row['tipe']=='masuk' else '-'}Rp {row['jumlah']:,.2f} | {row['keperluan']}"):
+                        st.write(f"Waktu: {row['waktu']}")
+                        st.write(f"Catatan: {row.get('catatan','')}")
+                        if row.get("bukti"):
+                            try:
+                                st.image(row["bukti"], caption=f"ID: {row['id']}", width=300)
+                            except Exception:
+                                st.write("Gagal menampilkan gambar (mungkin file hilang).")
+
 
     with tab4:
         st.subheader("Edit / Hapus Transaksi")
@@ -263,17 +301,17 @@ if is_admin:
                         except Exception as e:
                             st.error(f"Gagal: {e}")
 
-    # tampilkan bukti di bawah rekap (opsional)
-    st.subheader("Bukti Transfer (semua)")
-    if not df.empty:
-        df_with_bukti = df[df["bukti"].notnull()]
-        for _, row in df_with_bukti.iterrows():
-            st.markdown(f"**{row['nama']}** | Rp {row['jumlah']:,.2f} | {row['keperluan']} | {row['waktu']}")
-            if row.get("bukti"):
-                try:
-                    st.image(row["bukti"], caption=f"ID: {row['id']}", use_column_width=False)
-                except Exception:
-                    st.write("Gagal menampilkan gambar (mungkin file hilang).")
+    # # tampilkan bukti di bawah rekap (opsional)
+    # st.subheader("Bukti Transfer (semua)")
+    # if not df.empty:
+    #     df_with_bukti = df[df["bukti"].notnull()]
+    #     for _, row in df_with_bukti.iterrows():
+    #         st.markdown(f"**{row['nama']}** | Rp {row['jumlah']:,.2f} | {row['keperluan']} | {row['waktu']}")
+    #         if row.get("bukti"):
+    #             try:
+    #                 st.image(row["bukti"], caption=f"ID: {row['id']}", use_column_width=False)
+    #             except Exception:
+    #                 st.write("Gagal menampilkan gambar (mungkin file hilang).")
 else:
     # user biasa hanya bisa input pemasukan dengan upload bukti
     st.subheader(f"Input Pemasukan: {user_name}")
