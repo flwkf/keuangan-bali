@@ -146,43 +146,43 @@ if is_admin:
                 st.experimental_rerun()
 
     with tab2:
-    st.subheader("Tambah Pengeluaran Bersama (dibagi rata) dengan Bukti")
-    with st.form("form_pengeluaran_admin"):
-        total_pengeluaran = st.number_input("Total Pengeluaran Keseluruhan (Rp)", min_value=0.0, format="%.2f")
-        keperluan_peng = st.text_input("Keperluan Pengeluaran", value="Pengeluaran bersama")
-        catatan_peng = st.text_input("Catatan (opsional)", value="", help="Contoh: beli bahan, bensin, dsb.")
-        bukti_pengeluaran = st.file_uploader("Upload bukti pengeluaran (gambar)", type=["jpg", "jpeg", "png"], help="Bukti umum untuk keseluruhan pengeluaran", key="bukti_pengeluaran")
-        submitted_peng = st.form_submit_button("Bagi dan Simpan Pengeluaran")
-
-    if submitted_peng:
-        if total_pengeluaran <= 0:
-            st.warning("Total pengeluaran harus lebih dari 0.")
-        else:
-            share = total_pengeluaran / len(NAMA_PEMBAYAR)
-            # simpan file bukti pengeluaran bersama (satu gambar) dan gunakan path-nya di semua share
-            bukti_path = None
-            if bukti_pengeluaran:
-                ext = os.path.splitext(bukti_pengeluaran.name)[1]
-                nama_file = f"pengeluaran_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}{ext}"
-                path = os.path.join(UPLOAD_DIR, nama_file)
-                with open(path, "wb") as f:
-                    f.write(bukti_pengeluaran.getbuffer())
-                bukti_path = path
-
-            try:
-                for nama_p in NAMA_PEMBAYAR:
-                    tambah_transaksi(
-                        nama_p,
-                        share,
-                        f"{keperluan_peng} (share)",
-                        tipe="keluar",
-                        catatan=catatan_peng,
-                        bukti_path=bukti_path  # pakai field same untuk pengeluaran
-                    )
-                st.success(f"Pengeluaran Rp {total_pengeluaran:,.2f} dibagi rata ke {len(NAMA_PEMBAYAR)} orang, masing-masing Rp {share:,.2f}.") 
-                st.experimental_rerun()
-            except Exception as e:
-                st.error(f"Gagal menyimpan pengeluaran bersama: {e}")
+        st.subheader("Tambah Pengeluaran Bersama (dibagi rata) dengan Bukti")
+        with st.form("form_pengeluaran_admin"):
+            total_pengeluaran = st.number_input("Total Pengeluaran Keseluruhan (Rp)", min_value=0.0, format="%.2f")
+            keperluan_peng = st.text_input("Keperluan Pengeluaran", value="Pengeluaran bersama")
+            catatan_peng = st.text_input("Catatan (opsional)", value="", help="Contoh: beli bahan, bensin, dsb.")
+            bukti_pengeluaran = st.file_uploader("Upload bukti pengeluaran (gambar)", type=["jpg", "jpeg", "png"], help="Bukti umum untuk keseluruhan pengeluaran", key="bukti_pengeluaran")
+            submitted_peng = st.form_submit_button("Bagi dan Simpan Pengeluaran")
+    
+        if submitted_peng:
+            if total_pengeluaran <= 0:
+                st.warning("Total pengeluaran harus lebih dari 0.")
+            else:
+                share = total_pengeluaran / len(NAMA_PEMBAYAR)
+                # simpan file bukti pengeluaran bersama (satu gambar) dan gunakan path-nya di semua share
+                bukti_path = None
+                if bukti_pengeluaran:
+                    ext = os.path.splitext(bukti_pengeluaran.name)[1]
+                    nama_file = f"pengeluaran_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}{ext}"
+                    path = os.path.join(UPLOAD_DIR, nama_file)
+                    with open(path, "wb") as f:
+                        f.write(bukti_pengeluaran.getbuffer())
+                    bukti_path = path
+    
+                try:
+                    for nama_p in NAMA_PEMBAYAR:
+                        tambah_transaksi(
+                            nama_p,
+                            share,
+                            f"{keperluan_peng} (share)",
+                            tipe="keluar",
+                            catatan=catatan_peng,
+                            bukti_path=bukti_path  # pakai field same untuk pengeluaran
+                        )
+                    st.success(f"Pengeluaran Rp {total_pengeluaran:,.2f} dibagi rata ke {len(NAMA_PEMBAYAR)} orang, masing-masing Rp {share:,.2f}.") 
+                    st.experimental_rerun()
+                except Exception as e:
+                    st.error(f"Gagal menyimpan pengeluaran bersama: {e}")
 
     with tab3:
         st.subheader("Rekap & Ringkasan")
