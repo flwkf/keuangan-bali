@@ -115,9 +115,9 @@ def render_rekap(df, user_name, is_admin):
         display_cols = ["nama", "total_masuk", "jumlah_transaksi"]
     elif pilihan_tipe == "keluar":
         display_cols = ["nama", "total_keluar", "jumlah_transaksi"]
-    else:
+    else:  # Semua
         display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
-
+    
     st.markdown("**Rekap per orang:**")
     st.dataframe(
         summary[display_cols]
@@ -125,20 +125,16 @@ def render_rekap(df, user_name, is_admin):
         .reset_index(drop=True),
         use_container_width=True
     )
-
+    
     # totals berdasarkan filter
     total_masuk_all = df_filtered[df_filtered["tipe"] == "masuk"]["jumlah"].sum()
     total_keluar_all = df_filtered[df_filtered["tipe"] == "keluar"]["jumlah"].sum()
     netto_all = total_masuk_all - total_keluar_all
-
+    
     if pilihan_tipe == "masuk":
-        st.markdown(
-            f"**Total pemasukan:** Rp {total_masuk_all:,.2f} "
-        )
+        st.markdown(f"**Total pemasukan:** Rp {total_masuk_all:,.2f}")
     elif pilihan_tipe == "keluar":
-        st.markdown(
-            f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}"
-        )
+        st.markdown(f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}")
     else:
         st.markdown(
             f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
