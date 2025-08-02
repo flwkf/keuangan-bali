@@ -205,7 +205,7 @@ if is_admin:
                 # tidak ada pilihan keperluan, pakai tetap
                 keperluan_in = "Pembayaran"
             catatan_in = st.text_input("Catatan (opsional)", key="admin_masuk_catatan")
-            bukti_file = st.file_uploader("Upload bukti transfer (opsional)", type=["jpg", "jpeg", "png"], key="admin_bukti")
+            bukti_file = st.file_uploader("Upload bukti transfer", type=["jpg", "jpeg", "png"], key="admin_bukti")
             submitted_in = st.form_submit_button("Simpan Pemasukan")
 
         if submitted_in:
