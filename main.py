@@ -8,13 +8,6 @@ from datetime import datetime
 
 # ---------- konfigurasi ----------
 NAMA_PEMBAYAR = ["Rizal", "Fikrie", "Rendika", "Thesi", "Nanda", "Ryanta"]
-KEPERLUAN = [
-    "Iuran bulanan",
-    "Donasi",
-    "Pembelian bahan",
-    "Transport",
-    "Lain-lain"
-]
 UPLOAD_DIR = "uploads"  # tempat simpan bukti
 
 # buat folder kalau belum ada
@@ -49,7 +42,7 @@ def tambah_transaksi(nama, jumlah, keperluan, tipe="masuk", catatan="", bukti_pa
         "tipe": tipe,
         "catatan": catatan,
         "waktu": datetime.utcnow(),
-        "bukti": bukti_path,  # bisa None atau path ke file
+        "bukti": bukti_path,
     }
     collection.insert_one(doc)
 
@@ -88,10 +81,95 @@ def rekap_per_orang(df: pd.DataFrame):
     summary = pd.concat([masuk, keluar], axis=1).fillna(0).reset_index()
     summary["netto"] = summary["total_masuk"] - summary["total_keluar"]
     summary["jumlah_transaksi"] = df.groupby("nama").size().reindex(summary["nama"]).fillna(0).astype(int).values
-    # casting
     for col in ["total_masuk", "total_keluar", "netto"]:
         summary[col] = summary[col].astype(float)
     return summary
+
+def render_rekap(df, user_name, is_admin):
+    st.subheader("Rekap & Ringkasan")
+
+    if df.empty:
+        st.info("Belum ada transaksi.")
+        return
+
+    # pilihan nama: admin bisa pilih "Semua" atau per orang; user biasa hanya namanya
+    if is_admin:
+        pilihan_nama = ["Semua"] + NAMA_PEMBAYAR
+        filter_nama = st.selectbox("Tampilkan untuk:", pilihan_nama, key="rekap_filter_nama")
+    else:
+        filter_nama = user_name
+
+    # filter tipe transaksi
+    pilihan_tipe = st.selectbox("Tipe transaksi:", ["Semua", "masuk", "keluar"], key=f"rekap_filter_tipe_{'admin' if is_admin else 'user'}")
+
+    df_filtered = df.copy()
+    if filter_nama != "Semua":
+        df_filtered = df_filtered[df_filtered["nama"] == filter_nama]
+    if pilihan_tipe != "Semua":
+        df_filtered = df_filtered[df_filtered["tipe"] == pilihan_tipe]
+
+    summary = rekap_per_orang(df_filtered)
+
+    # tampil kolom sesuai tipe
+    if pilihan_tipe == "masuk":
+        display_cols = ["nama", "total_masuk", "netto", "jumlah_transaksi"]
+    elif pilihan_tipe == "keluar":
+        display_cols = ["nama", "total_keluar", "netto", "jumlah_transaksi"]
+    else:
+        display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
+
+    st.markdown("**Rekap per orang:**")
+    st.dataframe(
+        summary[display_cols]
+        .sort_values("netto", ascending=False)
+        .reset_index(drop=True),
+        use_container_width=True
+    )
+
+    # totals berdasarkan filter
+    total_masuk_all = df_filtered[df_filtered["tipe"] == "masuk"]["jumlah"].sum()
+    total_keluar_all = df_filtered[df_filtered["tipe"] == "keluar"]["jumlah"].sum()
+    netto_all = total_masuk_all - total_keluar_all
+
+    if pilihan_tipe == "masuk":
+        st.markdown(
+            f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
+            f"**Netto:** Rp {netto_all:,.2f}"
+        )
+    elif pilihan_tipe == "keluar":
+        st.markdown(
+            f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
+            f"**Netto:** Rp {netto_all:,.2f}"
+        )
+    else:
+        st.markdown(
+            f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
+            f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
+            f"**Netto:** Rp {netto_all:,.2f}"
+        )
+
+    st.markdown("---")
+    st.markdown("**Detail transaksi terbaru:**")
+    st.dataframe(
+        df_filtered.sort_values("waktu", ascending=False).reset_index(drop=True),
+        use_container_width=True
+    )
+
+    st.markdown("---")
+    st.subheader("Bukti Transfer (sesuai filter)")
+    df_with_bukti = df_filtered[df_filtered["bukti"].notnull()]
+    if df_with_bukti.empty:
+        st.info("Tidak ada bukti untuk filter ini.")
+    else:
+        for _, row in df_with_bukti.iterrows():
+            with st.expander(f"{row['nama']} | {'+' if row['tipe']=='masuk' else '-'}Rp {row['jumlah']:,.2f} | {row['keperluan']}"):
+                st.write(f"Waktu: {row['waktu']}")
+                st.write(f"Catatan: {row.get('catatan','')}")
+                if row.get("bukti"):
+                    try:
+                        st.image(row["bukti"], caption=f"ID: {row['id']}", width=300)
+                    except Exception:
+                        st.write("Gagal menampilkan gambar (mungkin file hilang).")
 
 # ---------- autentikasi nama ----------
 st.sidebar.header("Masuk / Pilih Nama")
@@ -112,7 +190,7 @@ else:
 # ambil data setiap refresh
 df = ambil_semua_transaksi()
 
-# ---------- tabs berbeda untuk admin vs user biasa ----------
+# ---------- tampilan ----------
 if is_admin:
     tab1, tab2, tab3, tab4 = st.tabs(["Pemasukan", "Pengeluaran", "Rekap", "Edit"])
     with tab1:
@@ -124,7 +202,8 @@ if is_admin:
             with col2:
                 jumlah_in = st.number_input("Jumlah Bayar (Rp)", min_value=0.0, format="%.2f", key="admin_masuk_jumlah")
             with col3:
-                keperluan_in = st.selectbox("Keperluan", KEPERLUAN, key="admin_masuk_keperluan")
+                # tidak ada pilihan keperluan, pakai tetap
+                keperluan_in = "Pembayaran"
             catatan_in = st.text_input("Catatan (opsional)", key="admin_masuk_catatan")
             bukti_file = st.file_uploader("Upload bukti transfer (opsional)", type=["jpg", "jpeg", "png"], key="admin_bukti")
             submitted_in = st.form_submit_button("Simpan Pemasukan")
@@ -142,7 +221,7 @@ if is_admin:
                         f.write(bukti_file.getbuffer())
                     bukti_path = path
                 tambah_transaksi(nama_in, jumlah_in, keperluan_in, tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
-                st.success(f"Pemasukan untuk {nama_in} tersimpan.") 
+                st.success(f"Pemasukan untuk {nama_in} tersimpan.")
 
     with tab2:
         st.subheader("Tambah Pengeluaran Bersama (dibagi rata) dengan Bukti")
@@ -152,13 +231,12 @@ if is_admin:
             catatan_peng = st.text_input("Catatan (opsional)", value="", help="Contoh: beli bahan, bensin, dsb.")
             bukti_pengeluaran = st.file_uploader("Upload bukti pengeluaran (gambar)", type=["jpg", "jpeg", "png"], help="Bukti umum untuk keseluruhan pengeluaran", key="bukti_pengeluaran")
             submitted_peng = st.form_submit_button("Bagi dan Simpan Pengeluaran")
-    
+
         if submitted_peng:
             if total_pengeluaran <= 0:
                 st.warning("Total pengeluaran harus lebih dari 0.")
             else:
                 share = total_pengeluaran / len(NAMA_PEMBAYAR)
-                # simpan file bukti pengeluaran bersama (satu gambar) dan gunakan path-nya di semua share
                 bukti_path = None
                 if bukti_pengeluaran:
                     ext = os.path.splitext(bukti_pengeluaran.name)[1]
@@ -167,7 +245,7 @@ if is_admin:
                     with open(path, "wb") as f:
                         f.write(bukti_pengeluaran.getbuffer())
                     bukti_path = path
-    
+
                 try:
                     for nama_p in NAMA_PEMBAYAR:
                         tambah_transaksi(
@@ -176,96 +254,14 @@ if is_admin:
                             f"{keperluan_peng} (share)",
                             tipe="keluar",
                             catatan=catatan_peng,
-                            bukti_path=bukti_path  # pakai field same untuk pengeluaran
+                            bukti_path=bukti_path
                         )
-                    st.success(f"Pengeluaran Rp {total_pengeluaran:,.2f} dibagi rata ke {len(NAMA_PEMBAYAR)} orang, masing-masing Rp {share:,.2f}.") 
+                    st.success(f"Pengeluaran Rp {total_pengeluaran:,.2f} dibagi rata ke {len(NAMA_PEMBAYAR)} orang, masing-masing Rp {share:,.2f}.")
                 except Exception as e:
                     st.error(f"Gagal menyimpan pengeluaran bersama: {e}")
 
     with tab3:
-        st.subheader("Rekap & Ringkasan")
-    
-        if df.empty:
-            st.info("Belum ada transaksi.")
-        else:
-            # filter per orang atau semua
-            pilihan_nama = ["Semua"] + NAMA_PEMBAYAR
-            filter_nama = st.selectbox("Tampilkan untuk:", pilihan_nama)
-    
-            # filter tipe transaksi
-            pilihan_tipe = st.selectbox("Tipe transaksi:", ["Semua", "masuk", "keluar"])
-    
-            df_filtered = df.copy()
-            if filter_nama != "Semua":
-                df_filtered = df_filtered[df_filtered["nama"] == filter_nama]
-            if pilihan_tipe != "Semua":
-                df_filtered = df_filtered[df_filtered["tipe"] == pilihan_tipe]
-    
-            summary = rekap_per_orang(df_filtered)
-    
-            # pilih kolom tampil sesuai tipe
-            if pilihan_tipe == "masuk":
-                display_cols = ["nama", "total_masuk", "netto", "jumlah_transaksi"]
-            elif pilihan_tipe == "keluar":
-                display_cols = ["nama", "total_keluar", "netto", "jumlah_transaksi"]
-            else:  # Semua
-                display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
-    
-            st.markdown("**Rekap per orang:**")
-            st.dataframe(
-                summary[display_cols]
-                .sort_values("netto", ascending=False)
-                .reset_index(drop=True),
-                use_container_width=True
-            )
-    
-            # totals berdasarkan filter
-            total_masuk_all = df_filtered[df_filtered["tipe"] == "masuk"]["jumlah"].sum()
-            total_keluar_all = df_filtered[df_filtered["tipe"] == "keluar"]["jumlah"].sum()
-            netto_all = total_masuk_all - total_keluar_all
-    
-            if pilihan_tipe == "masuk":
-                st.markdown(
-                    f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
-                    f"**Netto:** Rp {netto_all:,.2f}"
-                )
-            elif pilihan_tipe == "keluar":
-                st.markdown(
-                    f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
-                    f"**Netto:** Rp {netto_all:,.2f}"
-                )
-            else:
-                st.markdown(
-                    f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
-                    f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
-                    f"**Netto:** Rp {netto_all:,.2f}"
-                )
-    
-            st.markdown("---")
-            st.markdown("**Detail transaksi terbaru:**")
-            st.dataframe(
-                df_filtered.sort_values("waktu", ascending=False).reset_index(drop=True),
-                use_container_width=True
-            )
-    
-            # Bukti mengikuti filter
-            st.markdown("---")
-            st.subheader("Bukti Transfer (sesuai filter)")
-            df_with_bukti = df_filtered[df_filtered["bukti"].notnull()]
-            if df_with_bukti.empty:
-                st.info("Tidak ada bukti untuk filter ini.")
-            else:
-                for _, row in df_with_bukti.iterrows():
-                    with st.expander(f"{row['nama']} | {'+' if row['tipe']=='masuk' else '-'}Rp {row['jumlah']:,.2f} | {row['keperluan']}"):
-                        st.write(f"Waktu: {row['waktu']}")
-                        st.write(f"Catatan: {row.get('catatan','')}")
-                        if row.get("bukti"):
-                            try:
-                                st.image(row["bukti"], caption=f"ID: {row['id']}", width=300)
-                            except Exception:
-                                st.write("Gagal menampilkan gambar (mungkin file hilang).")
-
-
+        render_rekap(df, user_name, is_admin=True)
 
     with tab4:
         st.subheader("Edit / Hapus Transaksi")
@@ -304,7 +300,7 @@ if is_admin:
                             "catatan": edit_catatan,
                         }
                         collection.update_one({"_id": ObjectId(pilihan)}, {"$set": update_fields})
-                        st.success("Terupdate.") 
+                        st.success("Terupdate.")
                     except Exception as e:
                         st.error(f"Gagal update: {e}")
 
@@ -322,20 +318,8 @@ if is_admin:
                                 st.error("ID tidak ditemukan.")
                         except Exception as e:
                             st.error(f"Gagal: {e}")
-
-    # # tampilkan bukti di bawah rekap (opsional)
-    # st.subheader("Bukti Transfer (semua)")
-    # if not df.empty:
-    #     df_with_bukti = df[df["bukti"].notnull()]
-    #     for _, row in df_with_bukti.iterrows():
-    #         st.markdown(f"**{row['nama']}** | Rp {row['jumlah']:,.2f} | {row['keperluan']} | {row['waktu']}")
-    #         if row.get("bukti"):
-    #             try:
-    #                 st.image(row["bukti"], caption=f"ID: {row['id']}", use_column_width=False)
-    #             except Exception:
-    #                 st.write("Gagal menampilkan gambar (mungkin file hilang).")
 else:
-    # user biasa hanya bisa input pemasukan dengan upload bukti
+    # user biasa: input pemasukan + rekap (hanya untuk dirinya)
     st.subheader(f"Input Pemasukan: {user_name}")
     with st.form("form_input_nonadmin"):
         jumlah_in = st.number_input("Jumlah Bayar (Rp)", min_value=0.0, format="%.2f", key="user_jumlah")
@@ -357,3 +341,6 @@ else:
                 bukti_path = path
             tambah_transaksi(user_name, jumlah_in, "Pembayaran", tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
             st.success("Pemasukan dikirim. Tunggu konfirmasi dari admin jika perlu.")
+
+    st.markdown("---")
+    render_rekap(df, user_name, is_admin=False)
