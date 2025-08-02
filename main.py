@@ -235,3 +235,48 @@ with st.expander("🛠️ Hapus transaksi (admin/debug)"):
                     st.error("ID tidak ditemukan.")
             except Exception as e:
                 st.error(f"Gagal menghapus: {e}")
+# ---------- edit transaksi ----------
+st.subheader("Edit / Ubah Transaksi")
+if df.empty:
+    st.info("Belum ada transaksi untuk diedit.")
+else:
+    # pilih transaksi berdasarkan ID (tampilkan sedikit ringkasan supaya mudah)
+    pilihan = st.selectbox(
+        "Pilih transaksi untuk diedit",
+        options=df["id"].tolist(),
+        format_func=lambda x: (
+            f"{x[:6]}... | {df.loc[df['id'] == x, 'nama'].values[0]} | "
+            f"{'+' if df.loc[df['id'] == x, 'tipe'].values[0]=='masuk' else '-'}Rp {df.loc[df['id'] == x, 'jumlah'].values[0]:,.2f} | "
+            f"{df.loc[df['id'] == x, 'keperluan'].values[0]}"
+        )
+    )
+    if pilihan:
+        row = df[df["id"] == pilihan].iloc[0]
+        with st.form("form_edit"):
+            col1, col2 = st.columns(2)
+            with col1:
+                edit_nama = st.selectbox("Nama", NAMA_PEMBAYAR, index=NAMA_PEMBAYAR.index(row["nama"]) if row["nama"] in NAMA_PEMBAYAR else 0)
+                edit_tipe = st.selectbox("Tipe", ["masuk", "keluar"], index=0 if row.get("tipe", "masuk") == "masuk" else 1)
+            with col2:
+                edit_jumlah = st.number_input("Jumlah (Rp)", value=float(row.get("jumlah", 0.0)), format="%.2f")
+                edit_keperluan = st.text_input("Keperluan", value=row.get("keperluan", ""))
+            edit_catatan = st.text_input("Catatan", value=row.get("catatan", ""))
+            submitted_edit = st.form_submit_button("Simpan Perubahan")
+
+        if submitted_edit:
+            try:
+                update_fields = {
+                    "nama": edit_nama,
+                    "jumlah": float(edit_jumlah),
+                    "keperluan": edit_keperluan,
+                    "tipe": edit_tipe,
+                    "catatan": edit_catatan,
+                }
+                collection.update_one(
+                    {"_id": ObjectId(pilihan)},
+                    {"$set": update_fields}
+                )
+                st.success("Transaksi berhasil diperbarui. Refresh otomatis.")
+                st.experimental_rerun()
+            except Exception as e:
+                st.error(f"Gagal mengupdate: {e}")
