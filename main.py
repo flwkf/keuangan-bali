@@ -53,11 +53,26 @@ def tambah_transaksi(nama, jumlah, keperluan, tipe="masuk", catatan=""):
 def ambil_semua_transaksi():
     cursor = collection.find().sort("waktu", -1)
     df = pd.DataFrame(list(cursor))
-    if not df.empty:
-        df["waktu"] = pd.to_datetime(df["waktu"])
-        df["jumlah"] = df["jumlah"].astype(float)
-        df = df.rename(columns={"_id": "id"})
-        df["id"] = df["id"].astype(str)
+    if df.empty:
+        return df  # kosong, langsung return
+
+    # pastikan kolom dasar ada supaya tidak KeyError
+    if "waktu" in df.columns:
+        df["waktu"] = pd.to_datetime(df["waktu"], errors="coerce")
+    else:
+        df["waktu"] = pd.NaT
+
+    if "jumlah" in df.columns:
+        df["jumlah"] = pd.to_numeric(df["jumlah"], errors="coerce").fillna(0.0)
+    else:
+        df["jumlah"] = 0.0
+
+    # kalau dokumen lama belum punya tipe, anggap sebagai "masuk"
+    if "tipe" not in df.columns:
+        df["tipe"] = "masuk"
+
+    df = df.rename(columns={"_id": "id"})
+    df["id"] = df["id"].astype(str)
     return df
 
 def rekap_per_orang(df: pd.DataFrame):
