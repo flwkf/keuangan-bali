@@ -121,6 +121,11 @@ def render_rekap(df, user_name, is_admin):
         display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
         sort_by = "netto"
 
+    if is_admin:
+        if filter_nama == "Semua" and pilihan_tipe == "Semua":
+            st.markdown(f"**Sisa Saldo Total:** Rp {netto_all:,.2f}")  # keseluruhan tanpa filter
+        else:
+            st.markdown(f"**Sisa Saldo (sesuai filter):** Rp {netto_all:,.2f}")
     st.markdown("**Rekap per orang:**")
     to_show = summary[display_cols].copy()
     if sort_by in to_show.columns:
