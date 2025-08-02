@@ -32,8 +32,8 @@ if "MONGO_URI" not in st.secrets:
 def get_collection():
     uri = st.secrets["MONGO_URI"]
     client = MongoClient(uri)
-    db = client["GaitDB"]           # nama database
-    collection = db["gait_data"]    # nama collection
+    db = client["bali"]           # nama database
+    collection = db["bali"]    # nama collection
     return collection
 
 collection = get_collection()
