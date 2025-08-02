@@ -112,9 +112,9 @@ def render_rekap(df, user_name, is_admin):
 
     # tampil kolom sesuai tipe
     if pilihan_tipe == "masuk":
-        display_cols = ["nama", "total_masuk", "netto", "jumlah_transaksi"]
+        display_cols = ["nama", "total_masuk", "jumlah_transaksi"]
     elif pilihan_tipe == "keluar":
-        display_cols = ["nama", "total_keluar", "netto", "jumlah_transaksi"]
+        display_cols = ["nama", "total_keluar", "jumlah_transaksi"]
     else:
         display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
 
@@ -133,13 +133,11 @@ def render_rekap(df, user_name, is_admin):
 
     if pilihan_tipe == "masuk":
         st.markdown(
-            f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
-            f"**Netto:** Rp {netto_all:,.2f}"
+            f"**Total pemasukan:** Rp {total_masuk_all:,.2f} "
         )
     elif pilihan_tipe == "keluar":
         st.markdown(
-            f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
-            f"**Netto:** Rp {netto_all:,.2f}"
+            f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}"
         )
     else:
         st.markdown(
