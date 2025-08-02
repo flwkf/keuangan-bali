@@ -121,28 +121,6 @@ def render_rekap(df, user_name, is_admin):
         display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
         sort_by = "netto"
 
-        # totals berdasarkan filter
-    total_masuk_all = df_filtered[df_filtered["tipe"] == "masuk"]["jumlah"].sum()
-    total_keluar_all = df_filtered[df_filtered["tipe"] == "keluar"]["jumlah"].sum()
-    netto_all = total_masuk_all - total_keluar_all
-
-    if pilihan_tipe == "masuk":
-        st.markdown(f"**Total pemasukan:** Rp {total_masuk_all:,.2f}")
-    elif pilihan_tipe == "keluar":
-        st.markdown(f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}")
-    else:
-        st.markdown(
-            f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
-            f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
-            f"**Netto:** Rp {netto_all:,.2f}"
-        )
-
-    # tambahan: sisa saldo total (untuk admin)
-    if is_admin:
-        if filter_nama == "Semua" and pilihan_tipe == "Semua":
-            st.markdown(f"**Sisa Saldo Total:** Rp {netto_all:,.2f}")  # keseluruhan tanpa filter
-        else:
-            st.markdown(f"**Sisa Saldo (sesuai filter):** Rp {netto_all:,.2f}")
 
     st.markdown("**Rekap per orang:**")
     to_show = summary[display_cols].copy()
