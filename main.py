@@ -211,17 +211,19 @@ if is_admin:
         if submitted_in:
             if jumlah_in <= 0:
                 st.warning("Jumlah harus lebih dari 0.")
+            elif not bukti_file:
+                st.warning("Upload bukti transfer wajib untuk pemasukan.")
             else:
                 bukti_path = None
-                if bukti_file:
-                    ext = os.path.splitext(bukti_file.name)[1]
-                    nama_file = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}{ext}"
-                    path = os.path.join(UPLOAD_DIR, nama_file)
-                    with open(path, "wb") as f:
-                        f.write(bukti_file.getbuffer())
-                    bukti_path = path
+                ext = os.path.splitext(bukti_file.name)[1]
+                nama_file = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}{ext}"
+                path = os.path.join(UPLOAD_DIR, nama_file)
+                with open(path, "wb") as f:
+                    f.write(bukti_file.getbuffer())
+                bukti_path = path
                 tambah_transaksi(nama_in, jumlah_in, keperluan_in, tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
                 st.success(f"Pemasukan untuk {nama_in} tersimpan.")
+
 
     with tab2:
         st.subheader("Tambah Pengeluaran Bersama (dibagi rata) dengan Bukti")
@@ -330,17 +332,19 @@ else:
     if submitted_user:
         if jumlah_in <= 0:
             st.warning("Jumlah harus lebih dari 0.")
+        elif not bukti_file:
+            st.warning("Upload bukti transfer wajib untuk pemasukan.")
         else:
             bukti_path = None
-            if bukti_file:
-                ext = os.path.splitext(bukti_file.name)[1]
-                nama_file = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}{ext}"
-                path = os.path.join(UPLOAD_DIR, nama_file)
-                with open(path, "wb") as f:
-                    f.write(bukti_file.getbuffer())
-                bukti_path = path
+            ext = os.path.splitext(bukti_file.name)[1]
+            nama_file = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}{ext}"
+            path = os.path.join(UPLOAD_DIR, nama_file)
+            with open(path, "wb") as f:
+                f.write(bukti_file.getbuffer())
+            bukti_path = path
             tambah_transaksi(user_name, jumlah_in, "Pembayaran", tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
             st.success("Pemasukan dikirim. Tunggu konfirmasi dari admin jika perlu.")
+
 
     st.markdown("---")
     render_rekap(df, user_name, is_admin=False)
