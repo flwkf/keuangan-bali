@@ -110,14 +110,14 @@ def render_rekap(df, user_name, is_admin):
 
     summary = rekap_per_orang(df_filtered)
 
-    # tampil kolom sesuai tipe
+    # tentukan kolom yang tampil sesuai filter tipe
     if pilihan_tipe == "masuk":
         display_cols = ["nama", "total_masuk", "jumlah_transaksi"]
     elif pilihan_tipe == "keluar":
         display_cols = ["nama", "total_keluar", "jumlah_transaksi"]
     else:  # Semua
         display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
-    
+
     st.markdown("**Rekap per orang:**")
     st.dataframe(
         summary[display_cols]
@@ -125,12 +125,12 @@ def render_rekap(df, user_name, is_admin):
         .reset_index(drop=True),
         use_container_width=True
     )
-    
+
     # totals berdasarkan filter
     total_masuk_all = df_filtered[df_filtered["tipe"] == "masuk"]["jumlah"].sum()
     total_keluar_all = df_filtered[df_filtered["tipe"] == "keluar"]["jumlah"].sum()
     netto_all = total_masuk_all - total_keluar_all
-    
+
     if pilihan_tipe == "masuk":
         st.markdown(f"**Total pemasukan:** Rp {total_masuk_all:,.2f}")
     elif pilihan_tipe == "keluar":
@@ -196,11 +196,10 @@ if is_admin:
             with col2:
                 jumlah_in = st.number_input("Jumlah Bayar (Rp)", min_value=0.0, format="%.2f", key="admin_masuk_jumlah")
             with col3:
-                # tidak ada pilihan keperluan, pakai tetap
                 keperluan_in = "Pembayaran"
             catatan_in = st.text_input("Catatan (opsional)", key="admin_masuk_catatan")
-            bukti_file = st.file_uploader("Upload bukti transfer", type=["jpg", "jpeg", "png"], key="admin_bukti")
-            submitted_in = st.form_submit_button("Simpan Pemasukan")
+            bukti_file = st.file_uploader("Upload bukti transfer (opsional)", type=["jpg", "jpeg", "png"], key="admin_bukti")
+            submitted_in = st.form_submit_button("Simpan Pemasukan", disabled=not bukti_file)
 
         if submitted_in:
             if jumlah_in <= 0:
@@ -208,16 +207,13 @@ if is_admin:
             elif not bukti_file:
                 st.warning("Upload bukti transfer wajib untuk pemasukan.")
             else:
-                bukti_path = None
                 ext = os.path.splitext(bukti_file.name)[1]
                 nama_file = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}{ext}"
                 path = os.path.join(UPLOAD_DIR, nama_file)
                 with open(path, "wb") as f:
                     f.write(bukti_file.getbuffer())
-                bukti_path = path
-                tambah_transaksi(nama_in, jumlah_in, keperluan_in, tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
+                tambah_transaksi(nama_in, jumlah_in, keperluan_in, tipe="masuk", catatan=catatan_in, bukti_path=path)
                 st.success(f"Pemasukan untuk {nama_in} tersimpan.")
-
 
     with tab2:
         st.subheader("Tambah Pengeluaran Bersama (dibagi rata) dengan Bukti")
@@ -321,7 +317,7 @@ else:
         jumlah_in = st.number_input("Jumlah Bayar (Rp)", min_value=0.0, format="%.2f", key="user_jumlah")
         catatan_in = st.text_input("Catatan (opsional)", key="user_catatan")
         bukti_file = st.file_uploader("Upload bukti transfer (gambar)", type=["jpg", "jpeg", "png"], key="user_bukti")
-        submitted_user = st.form_submit_button("Kirim Pemasukan")
+        submitted_user = st.form_submit_button("Kirim Pemasukan", disabled=not bukti_file)
 
     if submitted_user:
         if jumlah_in <= 0:
@@ -329,16 +325,13 @@ else:
         elif not bukti_file:
             st.warning("Upload bukti transfer wajib untuk pemasukan.")
         else:
-            bukti_path = None
             ext = os.path.splitext(bukti_file.name)[1]
             nama_file = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex}{ext}"
             path = os.path.join(UPLOAD_DIR, nama_file)
             with open(path, "wb") as f:
                 f.write(bukti_file.getbuffer())
-            bukti_path = path
-            tambah_transaksi(user_name, jumlah_in, "Pembayaran", tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
+            tambah_transaksi(user_name, jumlah_in, "Pembayaran", tipe="masuk", catatan=catatan_in, bukti_path=path)
             st.success("Pemasukan dikirim. Tunggu konfirmasi dari admin jika perlu.")
-
 
     st.markdown("---")
     render_rekap(df, user_name, is_admin=False)
