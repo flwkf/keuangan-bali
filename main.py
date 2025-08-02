@@ -316,11 +316,10 @@ else:
     # user biasa hanya bisa input pemasukan dengan upload bukti
     st.subheader(f"Input Pemasukan: {user_name}")
     with st.form("form_input_nonadmin"):
-        jumlah_in = st.number_input("Jumlah Bayar (Rp)", min_value=0.0, format="%.2f", key="user_jumlah")
-        keperluan_in = st.selectbox("Keperluan", KEPERLUAN, key="user_keperluan")
-        catatan_in = st.text_input("Catatan (opsional)", key="user_catatan")
-        bukti_file = st.file_uploader("Upload bukti transfer (gambar)", type=["jpg", "jpeg", "png"], key="user_bukti")
-        submitted_user = st.form_submit_button("Kirim Pemasukan")
+    jumlah_in = st.number_input("Jumlah Bayar (Rp)", min_value=0.0, format="%.2f", key="user_jumlah")
+    catatan_in = st.text_input("Catatan (opsional)", key="user_catatan")
+    bukti_file = st.file_uploader("Upload bukti transfer (gambar)", type=["jpg", "jpeg", "png"], key="user_bukti")
+    submitted_user = st.form_submit_button("Kirim Pemasukan")
 
     if submitted_user:
         if jumlah_in <= 0:
@@ -334,5 +333,5 @@ else:
                 with open(path, "wb") as f:
                     f.write(bukti_file.getbuffer())
                 bukti_path = path
-            tambah_transaksi(user_name, jumlah_in, keperluan_in, tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
+            tambah_transaksi(user_name, jumlah_in, "Pembayaran", tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
             st.success("Pemasukan dikirim. Tunggu konfirmasi dari admin jika perlu.")
