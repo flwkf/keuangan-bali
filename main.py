@@ -143,7 +143,6 @@ if is_admin:
                     bukti_path = path
                 tambah_transaksi(nama_in, jumlah_in, keperluan_in, tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
                 st.success(f"Pemasukan untuk {nama_in} tersimpan.") 
-                st.experimental_rerun()
 
     with tab2:
         st.subheader("Tambah Pengeluaran Bersama (dibagi rata) dengan Bukti")
@@ -180,7 +179,6 @@ if is_admin:
                             bukti_path=bukti_path  # pakai field same untuk pengeluaran
                         )
                     st.success(f"Pengeluaran Rp {total_pengeluaran:,.2f} dibagi rata ke {len(NAMA_PEMBAYAR)} orang, masing-masing Rp {share:,.2f}.") 
-                    st.experimental_rerun()
                 except Exception as e:
                     st.error(f"Gagal menyimpan pengeluaran bersama: {e}")
 
@@ -247,7 +245,6 @@ if is_admin:
                         }
                         collection.update_one({"_id": ObjectId(pilihan)}, {"$set": update_fields})
                         st.success("Terupdate.") 
-                        st.experimental_rerun()
                     except Exception as e:
                         st.error(f"Gagal update: {e}")
 
@@ -261,7 +258,6 @@ if is_admin:
                             result = collection.delete_one({"_id": ObjectId(to_delete.strip())})
                             if result.deleted_count:
                                 st.success("Terhapus.")
-                                st.experimental_rerun()
                             else:
                                 st.error("ID tidak ditemukan.")
                         except Exception as e:
@@ -302,4 +298,3 @@ else:
                 bukti_path = path
             tambah_transaksi(user_name, jumlah_in, keperluan_in, tipe="masuk", catatan=catatan_in, bukti_path=bukti_path)
             st.success("Pemasukan dikirim. Tunggu konfirmasi dari admin jika perlu.")
-            st.experimental_rerun()
