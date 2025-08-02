@@ -56,7 +56,7 @@ def ambil_semua_transaksi():
     if df.empty:
         return df  # kosong, langsung return
 
-    # pastikan kolom dasar ada supaya tidak KeyError
+    # pastikan kolom dasar ada
     if "waktu" in df.columns:
         df["waktu"] = pd.to_datetime(df["waktu"], errors="coerce")
     else:
@@ -70,6 +70,15 @@ def ambil_semua_transaksi():
     # kalau dokumen lama belum punya tipe, anggap sebagai "masuk"
     if "tipe" not in df.columns:
         df["tipe"] = "masuk"
+    else:
+        # bersihkan nilai kosong
+        df["tipe"] = df["tipe"].fillna("masuk")
+
+    # kalau tidak ada nama, beri label Unknown
+    if "nama" not in df.columns:
+        df["nama"] = "Unknown"
+    else:
+        df["nama"] = df["nama"].fillna("Unknown")
 
     df = df.rename(columns={"_id": "id"})
     df["id"] = df["id"].astype(str)
@@ -78,8 +87,27 @@ def ambil_semua_transaksi():
 def rekap_per_orang(df: pd.DataFrame):
     if df.empty:
         return pd.DataFrame()
-    masuk = df[df["tipe"] == "masuk"].groupby("nama").agg(total_masuk=pd.NamedAgg(column="jumlah", aggfunc="sum"))
-    keluar = df[df["tipe"] == "keluar"].groupby("nama").agg(total_keluar=pd.NamedAgg(column="jumlah", aggfunc="sum"))
+    # pastikan kolom yang diperlukan ada agar tidak crash
+    for col in ["nama", "tipe", "jumlah"]:
+        if col not in df.columns:
+            # buat kolom default
+            if col == "nama":
+                df["nama"] = "Unknown"
+            elif col == "tipe":
+                df["tipe"] = "masuk"
+            elif col == "jumlah":
+                df["jumlah"] = 0.0
+
+    masuk = (
+        df[df["tipe"] == "masuk"]
+        .groupby("nama")
+        .agg(total_masuk=pd.NamedAgg(column="jumlah", aggfunc="sum"))
+    )
+    keluar = (
+        df[df["tipe"] == "keluar"]
+        .groupby("nama")
+        .agg(total_keluar=pd.NamedAgg(column="jumlah", aggfunc="sum"))
+    )
     summary = pd.concat([masuk, keluar], axis=1).fillna(0).reset_index()
     summary["netto"] = summary["total_masuk"] - summary["total_keluar"]
     summary["total_masuk"] = summary["total_masuk"].astype(float)
@@ -87,6 +115,7 @@ def rekap_per_orang(df: pd.DataFrame):
     summary["netto"] = summary["netto"].astype(float)
     summary["jumlah_transaksi"] = df.groupby("nama").size().reindex(summary["nama"]).fillna(0).astype(int).values
     return summary
+
 
 # ---------- form input pemasukan ----------
 with st.expander("Tambah Pemasukan / Pembayaran Individu"):
