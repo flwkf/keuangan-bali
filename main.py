@@ -113,16 +113,20 @@ def render_rekap(df, user_name, is_admin):
     # tentukan kolom yang tampil sesuai filter tipe
     if pilihan_tipe == "masuk":
         display_cols = ["nama", "total_masuk", "jumlah_transaksi"]
+        sort_by = "total_masuk"
     elif pilihan_tipe == "keluar":
         display_cols = ["nama", "total_keluar", "jumlah_transaksi"]
+        sort_by = "total_keluar"
     else:  # Semua
         display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
+        sort_by = "netto"
 
     st.markdown("**Rekap per orang:**")
+    to_show = summary[display_cols].copy()
+    if sort_by in to_show.columns:
+        to_show = to_show.sort_values(sort_by, ascending=False)
     st.dataframe(
-        summary[display_cols]
-        .sort_values("netto", ascending=False)
-        .reset_index(drop=True),
+        to_show.reset_index(drop=True),
         use_container_width=True
     )
 
@@ -164,6 +168,7 @@ def render_rekap(df, user_name, is_admin):
                         st.image(row["bukti"], caption=f"ID: {row['id']}", width=300)
                     except Exception:
                         st.write("Gagal menampilkan gambar (mungkin file hilang).")
+
 
 # ---------- autentikasi nama ----------
 st.sidebar.header("Masuk / Pilih Nama")
