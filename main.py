@@ -40,7 +40,6 @@ collection = get_collection()
 
 # ---------- helper ----------
 def tambah_transaksi(nama, jumlah, keperluan, tipe="masuk", catatan=""):
-    # tipe: "masuk" atau "keluar"
     doc = {
         "nama": nama,
         "jumlah": float(jumlah),
@@ -64,7 +63,6 @@ def ambil_semua_transaksi():
 def rekap_per_orang(df: pd.DataFrame):
     if df.empty:
         return pd.DataFrame()
-    # Pisahkan masuk dan keluar
     masuk = df[df["tipe"] == "masuk"].groupby("nama").agg(total_masuk=pd.NamedAgg(column="jumlah", aggfunc="sum"))
     keluar = df[df["tipe"] == "keluar"].groupby("nama").agg(total_keluar=pd.NamedAgg(column="jumlah", aggfunc="sum"))
     summary = pd.concat([masuk, keluar], axis=1).fillna(0).reset_index()
@@ -115,7 +113,6 @@ with st.expander("Tambah Pengeluaran Bersama (dibagi rata)"):
             share = total_pengeluaran / len(NAMA_PEMBAYAR)
             try:
                 for nama_p in NAMA_PEMBAYAR:
-                    # catat tiap orang sebagai pengeluaran (keluar)
                     tambah_transaksi(
                         nama=nama_p,
                         jumlah=share,
@@ -132,10 +129,10 @@ st.divider()
 # ---------- ambil & tampilkan data ----------
 df = ambil_semua_transaksi()
 
-# Rekap keseluruhan
+# Rekap keseluruhan: hanya tampil jika ada data
 st.subheader("Rekap Keseluruhan per Orang")
 if df.empty:
-    st.info("Belum ada transaksi.")
+    st.info("Belum ada transaksi tercatat. Tambahkan pemasukan atau pengeluaran dulu.")
 else:
     summary = rekap_per_orang(df)
     st.dataframe(
@@ -153,13 +150,12 @@ else:
 
 st.divider()
 
-# Tabel per orang / semua
+# Tabel detail: hanya tampil jika ada data
 st.subheader("Detail Transaksi")
-selected_person = st.selectbox("Pilih orang untuk lihat detail", ["Semua"] + NAMA_PEMBAYAR)
-
 if df.empty:
-    st.write("Tidak ada data untuk ditampilkan.")
+    st.write("Tidak ada data detail untuk ditampilkan.")
 else:
+    selected_person = st.selectbox("Pilih orang untuk lihat detail", ["Semua"] + NAMA_PEMBAYAR)
     if selected_person != "Semua":
         df_person = df[df["nama"] == selected_person].copy()
         if df_person.empty:
