@@ -318,13 +318,14 @@ if is_admin:
                             st.error(f"Gagal: {e}")
 else:
     # user biasa: input pemasukan + rekap (hanya untuk dirinya)
+    # user biasa: input pemasukan + rekap (hanya untuk dirinya)
     st.subheader(f"Input Pemasukan: {user_name}")
     with st.form("form_input_nonadmin"):
         jumlah_in = st.number_input("Jumlah Bayar (Rp)", min_value=0.0, format="%.2f", key="user_jumlah")
         catatan_in = st.text_input("Catatan (opsional)", key="user_catatan")
         bukti_file = st.file_uploader("Upload bukti transfer (gambar)", type=["jpg", "jpeg", "png"], key="user_bukti")
-        submitted_user = st.form_submit_button("Kirim Pemasukan", disabled=not bukti_file)
-
+        submitted_user = st.form_submit_button("Kirim Pemasukan")
+    
     if submitted_user:
         if jumlah_in <= 0:
             st.warning("Jumlah harus lebih dari 0.")
@@ -338,6 +339,7 @@ else:
                 f.write(bukti_file.getbuffer())
             tambah_transaksi(user_name, jumlah_in, "Pembayaran", tipe="masuk", catatan=catatan_in, bukti_path=path)
             st.success("Pemasukan dikirim. Tunggu konfirmasi dari admin jika perlu.")
+
 
     st.markdown("---")
     render_rekap(df, user_name, is_admin=False)
