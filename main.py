@@ -79,9 +79,9 @@ def rekap_per_orang(df: pd.DataFrame):
         .agg(total_keluar=pd.NamedAgg(column="jumlah", aggfunc="sum"))
     )
     summary = pd.concat([masuk, keluar], axis=1).fillna(0).reset_index()
-    summary["netto"] = summary["total_masuk"] - summary["total_keluar"]
+    summary["Total Saldo"] = summary["total_masuk"] - summary["total_keluar"]
     summary["jumlah_transaksi"] = df.groupby("nama").size().reindex(summary["nama"]).fillna(0).astype(int).values
-    for col in ["total_masuk", "total_keluar", "netto"]:
+    for col in ["total_masuk", "total_keluar", "Total Saldo"]:
         summary[col] = summary[col].astype(float)
     return summary
 
@@ -118,8 +118,8 @@ def render_rekap(df, user_name, is_admin):
         display_cols = ["nama", "total_keluar", "jumlah_transaksi"]
         sort_by = "total_keluar"
     else:  # Semua
-        display_cols = ["nama", "total_masuk", "total_keluar", "netto", "jumlah_transaksi"]
-        sort_by = "netto"
+        display_cols = ["nama", "total_masuk", "total_keluar", "Total Saldo", "jumlah_transaksi"]
+        sort_by = "Total Saldo"
 
 
     st.markdown("**Rekap per orang:**")
@@ -134,7 +134,7 @@ def render_rekap(df, user_name, is_admin):
     # totals berdasarkan filter
     total_masuk_all = df_filtered[df_filtered["tipe"] == "masuk"]["jumlah"].sum()
     total_keluar_all = df_filtered[df_filtered["tipe"] == "keluar"]["jumlah"].sum()
-    netto_all = total_masuk_all - total_keluar_all
+    Total_Saldo_all = total_masuk_all - total_keluar_all
 
     if pilihan_tipe == "masuk":
         st.markdown(f"**Total pemasukan:** Rp {total_masuk_all:,.2f}")
@@ -144,7 +144,7 @@ def render_rekap(df, user_name, is_admin):
         st.markdown(
             f"**Total pemasukan:** Rp {total_masuk_all:,.2f}  \n"
             f"**Total pengeluaran:** Rp {total_keluar_all:,.2f}  \n"
-            f"**Netto:** Rp {netto_all:,.2f}"
+            f"**Total Saldo:** Rp {Total_Saldo_all:,.2f}"
         )
 
     st.markdown("---")
