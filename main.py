@@ -219,7 +219,7 @@ if is_admin:
                 selected_row = df_all[df_all["_id"] == selected_id].iloc[0]
     
                 nama = st.selectbox("Nama", NAMA_PEMBAYAR, index=NAMA_PEMBAYAR.index(selected_row["nama"]))
-                nominal = st.number_input("Nominal", value=selected_row["nominal"])
+                nominal = st.number_input("Nominal", value=selected_row.get("nominal", 0))
                 keterangan = st.text_input("Keterangan", value=selected_row["keterangan"])
                 kategori = st.selectbox("Kategori", ["Pemasukan", "Pengeluaran"], index=["Pemasukan", "Pengeluaran"].index(selected_row["kategori"]))
     
