@@ -201,6 +201,52 @@ if is_admin:
     with tab3:
         render_rekap(df, user_name, is_admin=True)
 
+    # Tambahkan di tab4 (hanya admin yang bisa edit)
+    with tab4:
+        if is_admin:
+            st.header("Edit Transaksi")
+    
+            # Ambil semua data transaksi
+            all_data = list(collection.find())
+            if not all_data:
+                st.info("Belum ada transaksi yang bisa diedit.")
+            else:
+                # Buat DataFrame dan ubah _id jadi string agar bisa ditampilkan
+                df_all = pd.DataFrame(all_data)
+                df_all["_id"] = df_all["_id"].astype(str)
+    
+                selected_id = st.selectbox("Pilih ID Transaksi", df_all["_id"].tolist())
+                selected_row = df_all[df_all["_id"] == selected_id].iloc[0]
+    
+                nama = st.selectbox("Nama", NAMA_PEMBAYAR, index=NAMA_PEMBAYAR.index(selected_row["nama"]))
+                nominal = st.number_input("Nominal", value=selected_row["nominal"])
+                keterangan = st.text_input("Keterangan", value=selected_row["keterangan"])
+                kategori = st.selectbox("Kategori", ["Pemasukan", "Pengeluaran"], index=["Pemasukan", "Pengeluaran"].index(selected_row["kategori"]))
+    
+                # Upload ulang bukti jika perlu
+                uploaded_file = st.file_uploader("Upload Bukti Baru (opsional)", type=["jpg", "jpeg", "png"])
+    
+                if st.button("Simpan Perubahan"):
+                    update_data = {
+                        "nama": nama,
+                        "nominal": nominal,
+                        "keterangan": keterangan,
+                        "kategori": kategori,
+                        "tanggal": datetime.now(),
+                    }
+    
+                    if uploaded_file:
+                        # Simpan gambar baru ke GridFS
+                        new_file_id = fs.put(uploaded_file.read(), filename=uploaded_file.name)
+                        update_data["bukti_id"] = new_file_id
+    
+                    # Update data di MongoDB
+                    collection.update_one({"_id": ObjectId(selected_id)}, {"$set": update_data})
+                    st.success("Transaksi berhasil diperbarui!")
+        else:
+            st.warning("Anda tidak memiliki akses ke fitur ini.")
+
+
 else:
     st.subheader(f"Input Pemasukan: {user_name}")
     with st.form("form_user"):
