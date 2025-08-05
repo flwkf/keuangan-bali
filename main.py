@@ -218,10 +218,11 @@ if is_admin:
                 selected_id = st.selectbox("Pilih ID Transaksi", df_all["_id"].tolist())
                 selected_row = df_all[df_all["_id"] == selected_id].iloc[0]
     
-                nama = st.selectbox("Nama", NAMA_PEMBAYAR, index=NAMA_PEMBAYAR.index(selected_row["nama"]))
+                nama = st.selectbox("Nama", NAMA_PEMBAYAR, index=NAMA_PEMBAYAR.index(selected_row.get("nama", NAMA_PEMBAYAR[0])))
+                kategori = st.selectbox("Kategori", ["pemasukan", "pengeluaran"], index=0 if selected_row.get("kategori") == "pemasukan" else 1)
                 nominal = st.number_input("Nominal", value=selected_row.get("nominal", 0))
-                keterangan = st.text_input("Keterangan", value=selected_row["keterangan"])
-                kategori = st.selectbox("Kategori", ["Pemasukan", "Pengeluaran"], index=["Pemasukan", "Pengeluaran"].index(selected_row["kategori"]))
+                keterangan = st.text_input("Keterangan", value=selected_row.get("keterangan", ""))
+
     
                 # Upload ulang bukti jika perlu
                 uploaded_file = st.file_uploader("Upload Bukti Baru (opsional)", type=["jpg", "jpeg", "png"])
