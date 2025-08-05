@@ -155,7 +155,7 @@ df = ambil_semua_transaksi()
 
 # ---------- tampilan ----------
 if is_admin:
-    tab1, tab2, tab3 = st.tabs(["Pemasukan", "Pengeluaran", "Rekap"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Pemasukan", "Pengeluaran", "Rekap", "Edit"])
 
     with tab1:
         st.subheader("Tambah Pemasukan (Admin)")
