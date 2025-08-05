@@ -204,10 +204,11 @@ if is_admin:
     # Tambahkan di tab4 (hanya admin yang bisa edit)
     with tab4:
         st.subheader("Edit / Hapus Transaksi")
-        
+    
         if df.empty:
             st.info("Belum ada transaksi.")
         else:
+            # ----- EDIT TRANSAKSI -----
             pilihan = st.selectbox(
                 "Pilih transaksi untuk diedit",
                 options=df["id"].tolist(),
@@ -264,21 +265,28 @@ if is_admin:
                     except Exception as e:
                         st.error(f"Gagal update: {e}")
     
+            # ----- HAPUS TRANSAKSI -----
             with st.expander("Hapus transaksi"):
-                to_delete = st.text_input("Masukkan ID transaksi untuk dihapus")
+                hapus_pilihan = st.selectbox(
+                    "Pilih transaksi untuk dihapus",
+                    options=df["id"].tolist(),
+                    format_func=lambda x: (
+                        f"{x[:6]}... | {df.loc[df['id'] == x, 'nama'].values[0]} | "
+                        f"{'+' if df.loc[df['id'] == x, 'tipe'].values[0]=='masuk' else '-'}Rp {df.loc[df['id'] == x, 'jumlah'].values[0]:,.2f} | "
+                        f"{df.loc[df['id'] == x, 'keperluan'].values[0]}"
+                    )
+                )
                 if st.button("Hapus sekarang"):
-                    if not to_delete:
-                        st.warning("Masukkan ID terlebih dahulu.")
-                    else:
-                        try:
-                            result = collection.delete_one({"_id": ObjectId(to_delete.strip())})
-                            if result.deleted_count:
-                                st.success("Data berhasil dihapus.")
-                                st.experimental_rerun()
-                            else:
-                                st.error("ID tidak ditemukan.")
-                        except Exception as e:
-                            st.error(f"Gagal menghapus: {e}")
+                    try:
+                        result = collection.delete_one({"_id": ObjectId(hapus_pilihan)})
+                        if result.deleted_count:
+                            st.success("Transaksi berhasil dihapus.")
+                            st.experimental_rerun()
+                        else:
+                            st.error("ID tidak ditemukan.")
+                    except Exception as e:
+                        st.error(f"Gagal menghapus: {e}")
+
 
 
 
