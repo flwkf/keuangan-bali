@@ -118,7 +118,11 @@ def render_rekap(df, user_name, is_admin):
 
     st.markdown("---")
     st.subheader("Bukti Transfer (sesuai filter)")
-    df_with_bukti = df_filtered[df_filtered["bukti_id"].notnull()]
+    if "bukti_id" in df_filtered.columns:
+        df_with_bukti = df_filtered[df_filtered["bukti_id"].notnull()]
+    else:
+        df_with_bukti = pd.DataFrame()
+
     if df_with_bukti.empty:
         st.info("Tidak ada bukti untuk filter ini.")
     else:
