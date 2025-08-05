@@ -203,49 +203,83 @@ if is_admin:
 
     # Tambahkan di tab4 (hanya admin yang bisa edit)
     with tab4:
-        if is_admin:
-            st.header("Edit Transaksi")
+    st.subheader("Edit / Hapus Transaksi")
     
-            # Ambil semua data transaksi
-            all_data = list(collection.find())
-            if not all_data:
-                st.info("Belum ada transaksi yang bisa diedit.")
-            else:
-                # Buat DataFrame dan ubah _id jadi string agar bisa ditampilkan
-                df_all = pd.DataFrame(all_data)
-                df_all["_id"] = df_all["_id"].astype(str)
-    
-                selected_id = st.selectbox("Pilih ID Transaksi", df_all["_id"].tolist())
-                selected_row = df_all[df_all["_id"] == selected_id].iloc[0]
-    
-                nama = st.selectbox("Nama", NAMA_PEMBAYAR, index=NAMA_PEMBAYAR.index(selected_row.get("nama", NAMA_PEMBAYAR[0])))
-                kategori = st.selectbox("Kategori", ["pemasukan", "pengeluaran"], index=0 if selected_row.get("kategori") == "pemasukan" else 1)
-                nominal = st.number_input("Nominal", value=selected_row.get("nominal", 0))
-                keterangan = st.text_input("Keterangan", value=selected_row.get("keterangan", ""))
+    if df.empty:
+        st.info("Belum ada transaksi.")
+    else:
+        pilihan = st.selectbox(
+            "Pilih transaksi untuk diedit",
+            options=df["id"].tolist(),
+            format_func=lambda x: (
+                f"{x[:6]}... | {df.loc[df['id'] == x, 'nama'].values[0]} | "
+                f"{'+' if df.loc[df['id'] == x, 'tipe'].values[0]=='masuk' else '-'}Rp {df.loc[df['id'] == x, 'jumlah'].values[0]:,.2f} | "
+                f"{df.loc[df['id'] == x, 'keperluan'].values[0]}"
+            )
+        )
 
-    
-                # Upload ulang bukti jika perlu
-                uploaded_file = st.file_uploader("Upload Bukti Baru (opsional)", type=["jpg", "jpeg", "png"])
-    
-                if st.button("Simpan Perubahan"):
-                    update_data = {
-                        "nama": nama,
-                        "nominal": nominal,
-                        "keterangan": keterangan,
-                        "kategori": kategori,
-                        "tanggal": datetime.now(),
+        if pilihan:
+            try:
+                row = df[df["id"] == pilihan].iloc[0]
+            except IndexError:
+                st.error("Data tidak ditemukan.")
+                st.stop()
+
+            with st.form("form_edit_admin"):
+                col1, col2 = st.columns(2)
+                with col1:
+                    edit_nama = st.selectbox(
+                        "Nama",
+                        NAMA_PEMBAYAR,
+                        index=NAMA_PEMBAYAR.index(row.get("nama", NAMA_PEMBAYAR[0])) if row.get("nama") in NAMA_PEMBAYAR else 0
+                    )
+                    edit_tipe = st.selectbox(
+                        "Tipe",
+                        ["masuk", "keluar"],
+                        index=0 if row.get("tipe", "masuk") == "masuk" else 1
+                    )
+                with col2:
+                    edit_jumlah = st.number_input(
+                        "Jumlah (Rp)",
+                        value=float(row.get("jumlah", 0.0)),
+                        format="%.2f"
+                    )
+                    edit_keperluan = st.text_input("Keperluan", value=row.get("keperluan", ""))
+                edit_catatan = st.text_input("Catatan", value=row.get("catatan", ""))
+
+                submitted_edit = st.form_submit_button("Simpan Perubahan")
+
+            if submitted_edit:
+                try:
+                    update_fields = {
+                        "nama": edit_nama,
+                        "jumlah": float(edit_jumlah),
+                        "keperluan": edit_keperluan,
+                        "tipe": edit_tipe,
+                        "catatan": edit_catatan,
                     }
-    
-                    if uploaded_file:
-                        # Simpan gambar baru ke GridFS
-                        new_file_id = fs.put(uploaded_file.read(), filename=uploaded_file.name)
-                        update_data["bukti_id"] = new_file_id
-    
-                    # Update data di MongoDB
-                    collection.update_one({"_id": ObjectId(selected_id)}, {"$set": update_data})
-                    st.success("Transaksi berhasil diperbarui!")
-        else:
-            st.warning("Anda tidak memiliki akses ke fitur ini.")
+                    collection.update_one({"_id": ObjectId(pilihan)}, {"$set": update_fields})
+                    st.success("Berhasil diperbarui.")
+                    st.experimental_rerun()
+                except Exception as e:
+                    st.error(f"Gagal update: {e}")
+
+        with st.expander("Hapus transaksi"):
+            to_delete = st.text_input("Masukkan ID transaksi untuk dihapus")
+            if st.button("Hapus sekarang"):
+                if not to_delete:
+                    st.warning("Masukkan ID terlebih dahulu.")
+                else:
+                    try:
+                        result = collection.delete_one({"_id": ObjectId(to_delete.strip())})
+                        if result.deleted_count:
+                            st.success("Data berhasil dihapus.")
+                            st.experimental_rerun()
+                        else:
+                            st.error("ID tidak ditemukan.")
+                    except Exception as e:
+                        st.error(f"Gagal menghapus: {e}")
+
 
 
 else:
