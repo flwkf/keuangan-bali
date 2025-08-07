@@ -78,11 +78,8 @@ def render_rekap(df, user_name, is_admin):
         st.info("Belum ada transaksi.")
         return
 
-    if is_admin:
-        pilihan_nama = ["Semua"] + NAMA_PEMBAYAR
-        filter_nama = st.selectbox("Tampilkan untuk:", pilihan_nama, key="rekap_filter_nama")
-    else:
-        filter_nama = user_name
+    pilihan_nama = ["Semua"] + NAMA_PEMBAYAR
+    filter_nama = st.selectbox("Tampilkan untuk:", pilihan_nama, key="rekap_filter_nama")
 
     pilihan_tipe = st.selectbox("Tipe transaksi:", ["Semua", "masuk", "keluar"], key=f"rekap_filter_tipe_{'admin' if is_admin else 'user'}")
 
