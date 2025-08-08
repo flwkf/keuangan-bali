@@ -258,7 +258,6 @@ if is_admin:
                         }
                         collection.update_one({"_id": ObjectId(pilihan)}, {"$set": update_fields})
                         st.success("Berhasil diperbarui.")
-                        st.experimental_rerun()
                     except Exception as e:
                         st.error(f"Gagal update: {e}")
     
@@ -278,7 +277,6 @@ if is_admin:
                         result = collection.delete_one({"_id": ObjectId(hapus_pilihan)})
                         if result.deleted_count:
                             st.success("Transaksi berhasil dihapus.")
-                            st.experimental_rerun()
                         else:
                             st.error("ID tidak ditemukan.")
                     except Exception as e:
