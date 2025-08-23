@@ -1,7 +1,3 @@
-Nice 😃, kalau gitu saya rapikan jadi README versi **GitHub style** lengkap dengan badge teknologi biar lebih profesional:
-
----
-
 # 💰 Shared Finance - Bali Trip
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://www.python.org/)
