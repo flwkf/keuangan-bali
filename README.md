@@ -1,49 +1,45 @@
+Nice 😃, kalau gitu saya rapikan jadi README versi **GitHub style** lengkap dengan badge teknologi biar lebih profesional:
+
+---
+
 # 💰 Shared Finance - Bali Trip
+
+[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-red?logo=streamlit)](https://streamlit.io/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Database-green?logo=mongodb)](https://www.mongodb.com/)
+[![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-purple?logo=pandas)](https://pandas.pydata.org/)
 
 This is a **Streamlit + MongoDB (GridFS)** application to record and manage our **shared travel funds** for the Bali trip.
 I was trusted as the treasurer, so this app helps track **income, expenses, and transfer receipts** transparently for all members.
 
 ---
 
-## 🚀 Main Features
+## 🚀 Features
 
-1. **Add Income**
+✅ Add Income (with receipt upload)
 
-   * Each member can upload their payment receipt and record contributions.
-   * Data is stored securely in MongoDB.
+✅ Add Shared Expenses (auto split among members)
 
-2. **Add Shared Expenses** (Admin only)
+✅ Per-Person Financial Summary (income, expenses, balance)
 
-   * Admin (me) can record group expenses.
-   * Expenses are automatically split equally among all members.
+✅ Receipt Viewer (all transfers can be checked)
 
-3. **Per-Person Summary**
-
-   * Displays each member’s total income, expenses, and balance.
-   * Can be filtered by member name or transaction type (income/expense).
-
-4. **Transfer Receipts**
-
-   * All uploaded receipts are viewable directly in the app.
-
-5. **Edit & Delete Transactions** (Admin only)
-
-   * Admin can fix incorrect entries or remove transactions if necessary.
+✅ Admin Tools (edit & delete transactions)
 
 ---
 
 ## 🛠️ Tech Stack
 
 * **Python 3.11**
-* **Streamlit** for the UI
+* **Streamlit** for the frontend
 * **MongoDB + GridFS** for data & receipt storage
-* **Pandas** for data processing
+* **Pandas** for aggregation & reporting
 
 ---
 
 ## 📂 Data Structure
 
-Each transaction is stored with this format:
+Each transaction is stored in MongoDB like this:
 
 ```json
 {
@@ -61,21 +57,31 @@ Each transaction is stored with this format:
 
 ## 🔑 Authentication
 
-* **Admin**: only Rizal (with password)
-* **User**: other members log in by selecting their name
+* **Admin** → only Rizal (with password)
+* **User** → members log in by selecting their name
 
 ---
 
 ## ⚙️ How to Run
 
-1. Clone this repo / copy the script.
-2. Create a `.streamlit/secrets.toml` file:
+1. Clone the repo:
+
+   ```bash
+   git clone https://github.com/your-username/shared-finance-bali.git
+   cd shared-finance-bali
+   ```
+2. Install dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Create a `.streamlit/secrets.toml` file:
 
    ```toml
    MONGO_URI = "mongodb+srv://..."
    ADMIN_PASSWORD = "your_admin_password"
    ```
-3. Run the app:
+4. Run the app:
 
    ```bash
    streamlit run app.py
@@ -96,6 +102,17 @@ Each transaction is stored with this format:
 
 ## 🎯 Purpose
 
-This app was built to ensure **transparent financial management** during our trip, so every member can easily track contributions, expenses, and balances without manual notes.
+To ensure **transparent financial management** during our trip, so every member can easily monitor contributions, expenses, and balances without manual notes.
 
+---
 
+## 📸 Mockup Screenshot
+
+Sample interface of the app:
+
+![App Screenshot](<img width="1024" height="1536" alt="ChatGPT Image 23 Agu 2025, 09 03 07" src="https://github.com/user-attachments/assets/7e181ab8-bbb4-47a1-b6fb-9b887aa8df2a" />
+)
+
+---
+
+Mau saya bikinkan juga **requirements.txt** (isi dependency yang dipakai) biar repo-mu langsung bisa di-install siap jalan?
