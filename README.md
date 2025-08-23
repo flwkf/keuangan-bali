@@ -110,9 +110,5 @@ To ensure **transparent financial management** during our trip, so every member 
 
 Sample interface of the app:
 
-![App Screenshot](<img width="1024" height="1536" alt="ChatGPT Image 23 Agu 2025, 09 03 07" src="https://github.com/user-attachments/assets/7e181ab8-bbb4-47a1-b6fb-9b887aa8df2a" />
-)
+<img width="512" height="768" alt="ChatGPT Image 23 Agu 2025, 09 03 07" src="https://github.com/user-attachments/assets/7e181ab8-bbb4-47a1-b6fb-9b887aa8df2a" />
 
----
-
-Mau saya bikinkan juga **requirements.txt** (isi dependency yang dipakai) biar repo-mu langsung bisa di-install siap jalan?
